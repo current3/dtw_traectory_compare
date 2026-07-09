@@ -1,0 +1,23 @@
+# Виртуальное окружение
+.venv/
+venv/
+env/
+
+# Кеш и байткод Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Инструменты/IDE
+.vscode/
+.idea/
+*.swp
+
+# Результаты работы скрипта — генерируются заново командой `py main.py`
+results/figures/*.png
+results/exports/*.csv
+results/exports/*.kml
+
+# ОС
+.DS_Store
+Thumbs.db
