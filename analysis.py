@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from config import ORDER, R_KM, TOWNS
-from dtw import dtw_distance, t_critical
+from dtw import dtw_distance, dtw_raw_distance, t_critical
 from geo import haversine_km, resample_track
 
 
@@ -25,9 +25,12 @@ def visited_towns(tracks: dict[str, pd.DataFrame]) -> dict[str, list[str]]:
 
 @dataclass(frozen=True)
 class DtwMatrices:
-    full_2d: np.ndarray   # DTW по (широта, долгота)
-    lat_only: np.ndarray  # DTW только по широте
-    lon_only: np.ndarray  # DTW только по долготе
+    full_2d: np.ndarray       # DTW по (широта, долгота), нормировано по длине пути
+    lat_only: np.ndarray      # DTW только по широте, нормировано
+    lon_only: np.ndarray      # DTW только по долготе, нормировано
+    full_2d_raw: np.ndarray   # то же, «сырая» сумма стоимости пути (без нормировки)
+    lat_only_raw: np.ndarray
+    lon_only_raw: np.ndarray
 
 
 def compute_dtw_matrices(tracks: dict[str, pd.DataFrame], n_points: int = 200) -> DtwMatrices:
@@ -43,10 +46,15 @@ def compute_dtw_matrices(tracks: dict[str, pd.DataFrame], n_points: int = 200) -
     z_lat = {f: (resampled[f][0] - lat_mean) / lat_std for f in ORDER}
     z_lon = {f: (resampled[f][1] - lon_mean) / lon_std for f in ORDER}
 
-    def pairwise(z: dict[str, np.ndarray]) -> np.ndarray:
-        return np.array([[dtw_distance(z[a], z[b]) for b in ORDER] for a in ORDER])
+    def pairwise(z: dict[str, np.ndarray], raw: bool = False) -> np.ndarray:
+        distance = dtw_raw_distance if raw else dtw_distance
+        return np.array([[distance(z[a], z[b]) for b in ORDER] for a in ORDER])
 
-    return DtwMatrices(pairwise(z_2d), pairwise(z_lat), pairwise(z_lon))
+    return DtwMatrices(
+        full_2d=pairwise(z_2d), lat_only=pairwise(z_lat), lon_only=pairwise(z_lon),
+        full_2d_raw=pairwise(z_2d, raw=True), lat_only_raw=pairwise(z_lat, raw=True),
+        lon_only_raw=pairwise(z_lon, raw=True),
+    )
 
 
 @dataclass(frozen=True)

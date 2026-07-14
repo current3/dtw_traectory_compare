@@ -16,7 +16,7 @@ import numpy as np
 from analysis import coordinate_dependence, compute_dtw_matrices, visited_towns
 from config import LABELS, ORDER, RESULTS_EXPORTS, RESULTS_FIGURES
 from figures import plot_dependence, plot_dtw_matrices, plot_deviation, plot_trajectories, plot_waypoints
-from io_data import export_gmaps_csv, export_kml, load_all_tracks
+from io_data import export_dtw_matrices, export_gmaps_csv, export_kml, load_all_tracks
 
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -64,9 +64,17 @@ def main() -> None:
 
     log.info("\nЭтап 4. DTW-расстояния")
     matrices = compute_dtw_matrices(tracks)
+    log.info("\n-- Нормированные D/(n+m) --")
     print_matrix("2D (φ,λ)", matrices.full_2d)
     print_matrix("только φ", matrices.lat_only)
     print_matrix("только λ", matrices.lon_only)
+    log.info("\n-- Сырые D (сумма стоимости пути, без нормировки) --")
+    print_matrix("2D (φ,λ)", matrices.full_2d_raw)
+    print_matrix("только φ", matrices.lat_only_raw)
+    print_matrix("только λ", matrices.lon_only_raw)
+    export_dtw_matrices(matrices)
+    log.info("\nСохранены: dtw_2d.csv, dtw_lat_only.csv, dtw_lon_only.csv "
+              "и dtw_*_raw.csv (сырые расстояния)")
 
     log.info("\nЭтап 5. Зависимость φ и λ (корреляция, R2, критерий Стьюдента)")
     log.info(f"{'День':8}{'N':>6}{'r':>9}{'R2':>9}{'t':>11}{'t_кр':>9}{'значимо':>9}")

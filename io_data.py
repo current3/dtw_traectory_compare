@@ -5,8 +5,10 @@ import glob
 import os
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
+from analysis import DtwMatrices
 from config import DATA_RAW, KML_COLORS, LABELS, ORDER, RESULTS_EXPORTS
 
 
@@ -54,3 +56,18 @@ def export_kml(tracks: dict[str, pd.DataFrame], out_dir: Path = RESULTS_EXPORTS)
         ]
     lines.append("</Document></kml>")
     (out_dir / "su10_routes.kml").write_text("\n".join(lines), encoding="utf-8")
+
+
+def _matrix_to_frame(matrix: np.ndarray) -> pd.DataFrame:
+    labels = [LABELS[f] for f in ORDER]
+    return pd.DataFrame(matrix, index=labels, columns=labels)
+
+
+def export_dtw_matrices(matrices: DtwMatrices, out_dir: Path = RESULTS_EXPORTS) -> None:
+    """Сохраняет DTW-матрицы (2D, только φ, только λ) как CSV — нормированные и «сырые»."""
+    _matrix_to_frame(matrices.full_2d).to_csv(out_dir / "dtw_2d.csv", encoding="utf-8-sig")
+    _matrix_to_frame(matrices.lat_only).to_csv(out_dir / "dtw_lat_only.csv", encoding="utf-8-sig")
+    _matrix_to_frame(matrices.lon_only).to_csv(out_dir / "dtw_lon_only.csv", encoding="utf-8-sig")
+    _matrix_to_frame(matrices.full_2d_raw).to_csv(out_dir / "dtw_2d_raw.csv", encoding="utf-8-sig")
+    _matrix_to_frame(matrices.lat_only_raw).to_csv(out_dir / "dtw_lat_only_raw.csv", encoding="utf-8-sig")
+    _matrix_to_frame(matrices.lon_only_raw).to_csv(out_dir / "dtw_lon_only_raw.csv", encoding="utf-8-sig")
